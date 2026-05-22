@@ -1,69 +1,53 @@
-import os
-import sys
-import asyncio
-import threading
-import logging
-import traceback
-from flask import Flask
+"""
+'Telegram Bot Free Hosting' ilovasi uchun moslashtirilgan asosiy fayl.
+Botni webhook orqali emas, polling bilan ishga tushiradi.
+"""
 
+import asyncio
+import logging
+
+# Logging sozlamalari
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot Online", 200
-
-@app.route('/health')
-def health():
-    return "OK", 200
-
-def run_bot():
+async def main():
+    """Botni ishga tushiruvchi asosiy funksiya."""
     try:
+        # 1. Kerakli modullarni import qilish
         from config import BOT_TOKEN
-        logger.info(f"Token: {BOT_TOKEN[:15]}... (uzunligi: {len(BOT_TOKEN)})")
-        
-        if not BOT_TOKEN:
-            logger.error("❌ TOKEN TOPILMADI!")
-            return
-        
-        # Kutubxonalarni import qilishda xatolik bormi?
-        logger.info("Import qilinyapti...")
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
-        logger.info("aiogram import OK")
-        
         from handlers import private, business
-        logger.info("handlers import OK")
         
-        from database import db
-        logger.info("database import OK")
-        
+        # 2. Tokenni tekshirish
+        logger.info(f"Bot tokeni topildi: {BOT_TOKEN[:10]}...")
+        if not BOT_TOKEN:
+            logger.error("BOT_TOKEN topilmadi!")
+            return
+
+        # 3. Bot va Dispatcher obyektlarini yaratish
         bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
         dp = Dispatcher()
+        
+        # 4. Handlerlarni ulash
         dp.include_router(private.router)
         dp.include_router(business.router)
-        
+        logger.info("Handlerlar muvaffaqiyatli ulandi.")
+
+        # 5. Xatoliklarni ushlash
         @dp.errors()
         async def error_handler(event):
-            logger.error(f"Xatolik: {event.exception}")
+            logger.error(f"Xatolik yuz berdi: {event.exception}")
             return True
-        
-        async def start():
-            logger.info("✅ Bot ishga tushdi!")
-            await bot.delete_webhook(drop_pending_updates=True)
-            await dp.start_polling(bot)
-        
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(start())
+
+        # 6. Eski webhook'ni o'chirib, polling'ni boshlash
+        await bot.delete_webhook(drop_pending_updates=True)
+        logger.info("✅ Bot muvaffaqiyatli ishga tushdi! Polling boshlandi...")
+        await dp.start_polling(bot)
         
     except Exception as e:
-        logger.error(f"❌ BOT XATOLIK: {e}")
-        logger.error(traceback.format_exc())
+        logger.error(f"Botni ishga tushirishda xatolik: {e}")
 
-# Botni darhol ishga tushirish (threadda emas, to'g'ridan-to'g'ri)
-import time
-time.sleep(2)
-run_bot()
+if __name__ == "__main__":
+    logger.info("Dastur ishga tushirilmoqda...")
+    asyncio.run(main())
