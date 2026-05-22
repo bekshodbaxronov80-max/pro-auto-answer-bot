@@ -1,6 +1,6 @@
 """
 Render.com uchun moslashtirilgan asosiy fayl.
-Flask (port ochish uchun) + Aiogram polling.
+aiogram 3.15.0 + Flask.
 """
 
 import os
@@ -9,11 +9,9 @@ import threading
 import logging
 from flask import Flask
 
-# Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Flask ilova (Render port ochish uchun kerak)
 app = Flask(__name__)
 
 @app.route('/')
@@ -24,22 +22,17 @@ def home():
 def health():
     return "OK", 200
 
-# Bot funksiyasi
 async def main():
-    """Botni ishga tushiruvchi asosiy funksiya."""
     try:
         from config import BOT_TOKEN
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
+        from aiogram.client.default import DefaultBotProperties
         from handlers import private, business
 
         logger.info(f"Token topildi: {BOT_TOKEN[:10]}...")
-        
-        if not BOT_TOKEN:
-            logger.error("❌ BOT_TOKEN topilmadi!")
-            return
 
-        bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+        bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         dp = Dispatcher()
         dp.include_router(private.router)
         dp.include_router(business.router)
@@ -58,10 +51,8 @@ async def main():
         logger.error(f"Bot xatolik: {e}")
 
 def run_bot():
-    """Botni alohida threadda ishga tushirish."""
     asyncio.run(main())
 
-# Botni backgroundda ishga tushirish
 threading.Thread(target=run_bot, daemon=True).start()
 
 if __name__ == "__main__":
