@@ -4,10 +4,14 @@ aiogram 3.15.0 + Flask.
 """
 
 import os
+import sys
 import asyncio
 import threading
 import logging
 from flask import Flask
+
+# handlers papkasini yo'lga qo'shish
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
