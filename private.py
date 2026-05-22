@@ -854,7 +854,10 @@ async def ai_select_provider_set(callback: types.CallbackQuery):
     db.save_ai_provider(user_id, provider)
     
     await callback.answer(f"✅ {provider_info['name']} tanlandi!", show_alert=True)
-    await menu_ai_settings(callback)
+        await menu_ai_settings(callback)
+
+
+# ========== AI SOZLAMALAR HANDLERLARI ==========
     
     # ========== AI SOZLAMALAR HANDLERLARI ==========
 
