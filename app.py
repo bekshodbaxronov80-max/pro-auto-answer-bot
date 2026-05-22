@@ -18,18 +18,23 @@ def home():
 def health():
     return "OK", 200
 
+# ===== BOT NI ISHGA TUSHIRISH =====
 def run_bot():
-    """Botni alohida threadda ishga tushirish"""
     try:
         from config import BOT_TOKEN
+        logger.info(f"Token: {BOT_TOKEN[:15]}... (uzunligi: {len(BOT_TOKEN)})")
+        
+        if not BOT_TOKEN:
+            logger.error("❌ TOKEN TOPILMADI!")
+            return
+        
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
-        from handlers import private, business
-        
-        logger.info(f"Token topildi: {BOT_TOKEN[:10]}...")
         
         bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
         dp = Dispatcher()
+        
+        from handlers import private, business
         dp.include_router(private.router)
         dp.include_router(business.router)
         
@@ -43,12 +48,15 @@ def run_bot():
             await bot.delete_webhook(drop_pending_updates=True)
             await dp.start_polling(bot)
         
-        asyncio.run(start())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(start())
         
     except Exception as e:
-        logger.error(f"Bot xatolik: {e}")
+        logger.error(f"BOT XATOLIK: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
-# Botni darhol ishga tushirish
 threading.Thread(target=run_bot, daemon=True).start()
 
 if __name__ == "__main__":
