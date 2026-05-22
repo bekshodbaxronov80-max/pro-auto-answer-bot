@@ -3,6 +3,7 @@ import sys
 import asyncio
 import threading
 import logging
+import traceback
 from flask import Flask
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -18,7 +19,6 @@ def home():
 def health():
     return "OK", 200
 
-# ===== BOT NI ISHGA TUSHIRISH =====
 def run_bot():
     try:
         from config import BOT_TOKEN
@@ -28,13 +28,20 @@ def run_bot():
             logger.error("❌ TOKEN TOPILMADI!")
             return
         
+        # Kutubxonalarni import qilishda xatolik bormi?
+        logger.info("Import qilinyapti...")
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
+        logger.info("aiogram import OK")
+        
+        from handlers import private, business
+        logger.info("handlers import OK")
+        
+        from database import db
+        logger.info("database import OK")
         
         bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
         dp = Dispatcher()
-        
-        from handlers import private, business
         dp.include_router(private.router)
         dp.include_router(business.router)
         
@@ -53,12 +60,10 @@ def run_bot():
         loop.run_until_complete(start())
         
     except Exception as e:
-        logger.error(f"BOT XATOLIK: {e}")
-        import traceback
+        logger.error(f"❌ BOT XATOLIK: {e}")
         logger.error(traceback.format_exc())
 
-threading.Thread(target=run_bot, daemon=True).start()
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+# Botni darhol ishga tushirish (threadda emas, to'g'ridan-to'g'ri)
+import time
+time.sleep(2)
+run_bot()
