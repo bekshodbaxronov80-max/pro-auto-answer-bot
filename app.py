@@ -10,7 +10,6 @@ import threading
 import logging
 from flask import Flask
 
-# handlers papkasini yo'lga qo'shish
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -32,14 +31,17 @@ async def main():
         from aiogram import Bot, Dispatcher
         from aiogram.enums import ParseMode
         from aiogram.client.default import DefaultBotProperties
-        from handlers import private, business
+        import private
+        import business
 
         logger.info(f"Token topildi: {BOT_TOKEN[:10]}...")
 
         bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         dp = Dispatcher()
+
         dp.include_router(private.router)
         dp.include_router(business.router)
+
         logger.info("Handlerlar ulandi.")
 
         @dp.errors()
@@ -60,6 +62,6 @@ def run_bot():
 threading.Thread(target=run_bot, daemon=True).start()
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     logger.info(f"Server {port} portda ishga tushmoqda...")
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
