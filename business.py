@@ -15,57 +15,36 @@ router = Router()
 
 @router.business_connection()
 async def business_connection_handler(event: types.BusinessConnection):
-    """
-    Business Connection hodisasi:
-    - Foydalanuvchi profilingini botga ulaganda
-    - Uzilganda
-    """
+    """Business Connection hodisasi."""
     user_id = event.user.id
     connection_id = event.id
 
     user = db.get_user(user_id)
     if not user:
-        # Foydalanuvchi bazada yo'q, qo'shamiz
         db.add_user(user_id, "uz")
         user = db.get_user(user_id)
-    
+
     lang = user.get("language", "uz") if user else "uz"
 
     try:
         if event.is_enabled:
-            # Ulanish yoqilgan
             logger.info(f"Foydalanuvchi {user_id} business connection yoqdi: {connection_id}")
             db.save_business_connection(user_id, connection_id)
-            
             try:
-                await event.bot.send_message(
-                    user_id,
-                    get_text(lang, "business_connected"),
-                    parse_mode="HTML"
-                )
+                await event.bot.send_message(user_id, get_text(lang, "business_connected"), parse_mode="HTML")
             except Exception as e:
                 logger.warning(f"Foydalanuvchi {user_id} ga xabar yuborib bo'lmadi: {e}")
         else:
-            # Ulanish o'chirilgan
             logger.info(f"Foydalanuvchi {user_id} business connection o'chirdi: {connection_id}")
             db.remove_business_connection(user_id)
-            
             try:
-                await event.bot.send_message(
-                    user_id,
-                    get_text(lang, "business_disconnected"),
-                    parse_mode="HTML"
-                )
+                await event.bot.send_message(user_id, get_text(lang, "business_disconnected"), parse_mode="HTML")
             except Exception as e:
                 logger.warning(f"Foydalanuvchi {user_id} ga xabar yuborib bo'lmadi: {e}")
     except Exception as e:
         logger.error(f"Business connection handler xatolik: {e}", exc_info=True)
 
 
-# Fayl boshiga import qo'shing
-from ai_providers import AIProvider
-
-# business_message_handler ichidagi AI qismini almashtiring
 @router.business_message()
 async def business_message_handler(message: types.Message):
     """Business orqali kelgan xabarlarni qayta ishlash."""
@@ -104,8 +83,7 @@ async def business_message_handler(message: types.Message):
             api_key = ai_settings["api_key"]
             system_prompt = ai_settings.get("system_prompt", "")
             model = ai_settings.get("model_name")
-            
-            # AI dan javob olish
+
             result = await AIProvider.send_request(
                 provider=provider,
                 api_key=api_key,
@@ -113,7 +91,7 @@ async def business_message_handler(message: types.Message):
                 system_prompt=system_prompt,
                 model=model
             )
-            
+
             if result["success"]:
                 try:
                     await message.reply_text(result["reply"][:4000], parse_mode="HTML")
@@ -122,7 +100,6 @@ async def business_message_handler(message: types.Message):
                     logger.error(f"AI javob yuborishda xatolik: {e}")
             else:
                 logger.error(f"AI xatolik: {result['error']}")
-                # AI ishlamasa, avto-javob topilmadi, jim turamiz
 
     except Exception as e:
         logger.error(f"Business message handler xatolik: {e}", exc_info=True)
