@@ -2,7 +2,7 @@
 20 ta AI Chat API provayderlari uchun universal ulanish moduli.
 Barcha API lar uchun yagona interfeys.
 """
-
+import asyncio
 import aiohttp
 import json
 from typing import Optional, Dict, Any
